@@ -10,10 +10,10 @@ block, drug, control, placebo
 ## Pivot wide to long 
 
 library(tidyr)
-tidy_trial <- ...(trial,
-                  cols = ...,
-                  names_to = ...,
-                  values_to = ...)
+tidy_trial <- pivot_longer(trial,
+                  cols = c(drug, control, placebo),
+                  names_to = 'treatment',
+                  values_to = 'response')
 
 ## Pivot long to wide 
 
@@ -26,58 +26,57 @@ participant,   attr, val
 2          , income,  60
 ")
 
-tidy_survey <- ...(survey,
-                   names_from = ...,
-                   values_from = ...)
+tidy_survey <- pivot_wider(survey,
+                   names_from = 'attr',
+                   values_from = 'val')
 
 tidy_survey <- pivot_wider(survey,
                            names_from = attr,
                            values_from = val,
-                           values_fill = ...)
+                           values_fill = 0)
 
 ## Sample Data 
 
 library(data.table)
-cbp <- fread('data/cbp15co.csv')
+cbp <- fread('cbp15co.csv')
 
 cbp <- fread(
-  'data/cbp15co.csv',
-  ...,
-  ...)
+  'cbp15co.csv',
+  colClasses = c(FIPSTATE= 'character', FIPSCTY = 'character'))
 
 acs <- fread(
-  'data/ACS/sector_ACS_15_5YR_S2413.csv',
+  'ACS/sector_ACS_15_5YR_S2413.csv',
   colClasses = c(FIPS = 'character'))
 
 ## dplyr Functions 
 
-library(...)
-cbp2 <- filter(...,
-  ...,
-  !grepl('------', NAICS))
-
-library(...)
+library(dplyr)
 cbp2 <- filter(cbp,
-  ...)
+  grepl('----', NAICS), #include with 4 dashes in that column
+  !grepl('------', NAICS)) #not include with 5 dashes
 
-cbp3 <- mutate(...,
-  ...)
+library(stringr)
+cbp2 <- filter(cbp,
+  str_detect(NAICS, '[0-9]{2}----'))
+
+cbp3 <- mutate(cbp2,
+  FIPS = str_c(FIPSTATE, FIPSCTY))
 
 cbp3 <- mutate(cbp2,
   FIPS = str_c(FIPSTATE, FIPSCTY),
-  ...)
+  NAICS= str_remove(NAICS, '-+'))
 
-...
+cbp<- cbp %>%
   filter(
     str_detect(NAICS, '[0-9]{2}----')
-  ) ...
+  ) %>%
   mutate(
     FIPS = str_c(FIPSTATE, FIPSCTY),
     NAICS = str_remove(NAICS, '-+')
   )
 
-...
-  ...(
+cbp<- cbp%>% 
+  select(
     FIPS,
     NAICS,
     starts_with('N')
